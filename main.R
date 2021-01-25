@@ -1,7 +1,7 @@
 require(RSocrata)
 require(data.table)
 
-source(file = "R/top_categories.R")
+source(file = "src/top_categories.R")
 
 # Socrata documentation for queries
 # https://dev.socrata.com/docs/queries/
@@ -106,4 +106,3 @@ y <- top_categories_multiple(
 proveedores <- merge(x = x, y = y, by = "nom_raz_social_contratista", all = T)
 proveedores <- proveedores[order(Valor, decreasing = T)]
 head(proveedores, 100)
-proveedores[nom_raz_social_contratista %in% "CAMILO EDUARDO CABRERA GARRIDO",]
