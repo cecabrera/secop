@@ -1,12 +1,13 @@
 require(RSocrata)
 require(data.table)
 
-source(file = "src/top_categories.R")
+for(file_ in list.files(path = "src", full.names = T, recursive = T)){
+  source(file = file_, local = T, encoding = "utf-8")
+}
 
 # Socrata documentation for queries
 # https://dev.socrata.com/docs/queries/
 
-url <- 
 # https://socratadiscovery.docs.apiary.io/#reference
 result_objects <- c(
   "resource"
@@ -23,14 +24,6 @@ RSocrata::validateUrl(url = "https://www.datos.gov.co/Gastos-Gubernamentales/SEC
 RSocrata::ls.socrata("https://www.datos.gov.co/Gastos-Gubernamentales/SECOP-I/xvdy-vvsk")
 
 # Extraer los nombres de las columnas del link
-getColumnNames <- function(url){
-  url_ <- sprintf(
-    "%s?$limit=10&$offset=0"
-    , url)
-  coln_ <- colnames(data.table(RSocrata::read.socrata(url = url_)))
-  coln_ <- coln_[order(coln_)]
-  coln_
-}
 
 secop1 <- "https://www.datos.gov.co/Gastos-Gubernamentales/SECOP-I/xvdy-vvsk"
 secop2_pc <- "https://www.datos.gov.co/Gastos-Gubernamentales/SECOP-II-Procesos-de-Contrataci-n/p6dx-8zbt"
@@ -38,47 +31,31 @@ secop2_ce <- "https://www.datos.gov.co/Gastos-Gubernamentales/SECOP-II-Contratos
 secop <- "https://www.datos.gov.co/Gastos-Gubernamentales/SECOP-Integrado/rpmr-utcd"
 tienda <- "https://www.datos.gov.co/Gastos-Gubernamentales/Tienda-Virtual-del-Estado-Colombiano-Consolidado/rgxm-mmea"
 
-url <- secop2_pc
-
 getColumnNames(secop1)
 getColumnNames(secop2_pc)
 getColumnNames(secop2_ce)
 getColumnNames(secop)
 getColumnNames(tienda)
 
-getData <- function(url, select = NULL, where = "", offset = 0, limit = 1000){
-  # Función que extrae los datos de SOCRATA
-  # El where debe incluir el "&" al inicio
-  # Ejemplo: where = "departamento_entidad=Huila"
-  if(is.null(select)){
-    select_ <- sprintf("$select=%s",paste(getColumnNames(url), collapse = ","))
-  } else {
-    select_ <- sprintf("$select=%s",paste(select, collapse = ","))
-  }
-  limit_ <- sprintf("$limit=%s", limit)
-  offset_ <- sprintf("$offset=%s", offset)
-  url_ <- sprintf(
-    "%s?%s&%s&%s%s"
-    , url
-    , select_
-    , limit_
-    , offset_
-    , where
-    )
-  d <- data.table(RSocrata::read.socrata(url = url_))
-  d
-}
+url <- secop2_pc
+col_ <- getColumnNames(url)
+
 
 where <- list(
   "departamento_entidad" = "Huila"
   , "adjudicado" = "No"
   , "estado_de_apertura_del_proceso" = "Abierto"
+  , "descripci_n_del_procedimiento" = "%25datos%25"
+  , "nombre_del_procedimiento" = "%25datos%25"
+  , "fecha_de_publicacion_del" = "> '2021-01-10T00:00:00'"
+  , 'estado_del_procedimiento'
 )
-col_ <- getColumnNames(url)
-d <- getData(
+d <- getDataTable(
   url = url
-  , where = "&departamento_entidad=Huila&adjudicado=No&estado_de_apertura_del_proceso=Abierto"
-  , select = col_)
+  , where = "&adjudicado=No&estado_de_apertura_del_proceso='Abierto'&$q='datos'&$order=fecha_de_publicacion_del DESC"
+  , select = col_
+  # , limit = 1000
+  )
 for(col_ in colnames(d)){
   print(d[,.N, col_][order(N, decreasing = T)])
 }
