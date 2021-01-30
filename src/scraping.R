@@ -16,14 +16,37 @@ scraping <- function(url, remDr, ind){
   
   titleVal <- webElem$getElementText()[[1]]
   
-  print("--- Get contract date ---")
-  dates <- remDr$findElement(using = "xpath", value = '//*[@id="dtmbScheduleDateTime_48_txt"]')
-  dates_ <- strsplit(webElem$getElementText()[[1]], " ")
-  
   count=0
+  print("----Procedure type---")
+  # typePro <- remDr$findElement(using = "xpath", value = '//*[@id="fdsRequestSummaryInfo_tblDetail_trRowProcedureType_tdCell2_spnProcedureType"]')
+  # typePro <- typePro$getElementText()[[1]]
+  # if(typePro == "Contratación directa."){
+  #   count=count+1
+  # }
   
-  if(is.na(as.Date(dates_[[1]][1], format = "%d/%m/%Y"))){
-    count = count+1
+  print("--- Get contract date ---")
+  
+  show_condition <- function(code) {
+    tryCatch(code,
+             error = function(c) "error",
+             warning = function(c) "warning",
+             message = function(c) "message"
+    )
+  }
+  
+  getDates <- function(xpath){
+    show_condition(remDr$findElement(using = "xpath", value = xpath))
+    
+  }
+  
+  dates_ <- getDates('//*[@id="dtmbScheduleDateTime_48_txt"]')
+  
+  if(typeof(dates_) !="character"){
+    dates_ <- strsplit(dates_$getElementText()[[1]], " ")
+    
+    if (!is.na(as.Date(dates_[[1]][1], format = "%d/%m/%Y"))){
+      count = count+1
+    }
   }
   
   print("----getTables---")
