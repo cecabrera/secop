@@ -1,6 +1,7 @@
 library(data.table)
 library(RSocrata)
 library(RSelenium)
+library(xlsx)
 
 for(file_ in list.files(path = "src", full.names = T, recursive = T)){
   source(file = file_, local = T, encoding = "utf-8")
@@ -35,6 +36,7 @@ for (c in keyWords){
              , "ciudad_entidad"
              , "Keyword"
              , "entidad"
+             , "nit_entidad"
              , "descripci_n_del_procedimiento"
              , "urlproceso"
              , "duracion"
@@ -86,8 +88,10 @@ entidades_ <- datosSecop2[#modalidad_de_contratacion != "Contratación directa"
                               , PromValorContrato = mean(as.numeric(precio_base))
                               , DeStandValrContrato = sd(as.numeric(precio_base))
                               )
-                          , by = .(entidad)]
+                          , by = .(entidad, nit_entidad)]
 entidades_ <- entidades_[order(contratos, decreasing = T)]
+
+write.xlsx2(x = entidades_, file = "doc_anticorrupcion/entidades.xlsx")
 
 sheet_overwrite(data = entidades_
                 , ss = driveUrl
